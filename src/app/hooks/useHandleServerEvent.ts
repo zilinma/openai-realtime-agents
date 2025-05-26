@@ -84,7 +84,36 @@ export function useHandleServerEvent({
 
     addTranscriptBreadcrumb(`function call: ${functionCallParams.name}`, args);
 
-    if (currentAgent?.toolLogic?.[functionCallParams.name]) {
+    if (functionCallParams.name === "recordBurnoutAssessment") {
+      // Handle the burnout assessment data
+      const assessment = args.caregiverAssessment;
+      
+      // Debug logging to make sure we're receiving the assessment data
+      console.log("Received burnout assessment:", JSON.stringify(assessment, null, 2));
+      
+      // Dispatch event with assessment data to update the UI
+      window.dispatchEvent(new CustomEvent('burnoutAssessmentUpdate', { 
+        detail: { assessment } 
+      }));
+      
+      addTranscriptBreadcrumb(
+        `function call result: ${functionCallParams.name}`,
+        { success: true, assessmentInfo: assessment }
+      );
+
+      // Respond to the function call
+      sendClientEvent({
+        type: "conversation.item.create",
+        item: {
+          type: "function_call_output",
+          call_id: functionCallParams.call_id,
+          output: JSON.stringify({ success: true, assessmentInfo: assessment }),
+        },
+      });
+      
+      // Continue the conversation
+      sendClientEvent({ type: "response.create" });
+    } else if (currentAgent?.toolLogic?.[functionCallParams.name]) {
       const fn = currentAgent.toolLogic[functionCallParams.name];
       const fnResult = await fn(args, transcriptItems, addTranscriptBreadcrumb);
       addTranscriptBreadcrumb(

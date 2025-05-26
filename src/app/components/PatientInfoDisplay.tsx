@@ -1,7 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import RoleplayGuide from "./RoleplayGuide";
+import BurnoutAssessmentDisplay, { CaregiverAssessment } from "./BurnoutAssessmentDisplay";
+import InsuranceDocumentUpload from "./InsuranceDocumentUpload";
+import InsuranceCoverageDisplay, { InsuranceCoverage } from "./InsuranceCoverageDisplay";
 
 interface PatientInfo {
   name?: string;
@@ -21,10 +24,21 @@ interface PatientInfo {
 interface PatientInfoDisplayProps {
   patientInfo: PatientInfo;
   currentAgent?: string;
+  caregiverAssessment?: CaregiverAssessment;
 }
 
-function PatientInfoDisplay({ patientInfo, currentAgent }: PatientInfoDisplayProps) {
+function PatientInfoDisplay({ patientInfo, currentAgent, caregiverAssessment = {} }: PatientInfoDisplayProps) {
+  const [insuranceCoverage, setInsuranceCoverage] = useState<InsuranceCoverage>({});
+  const [showInsuranceInfo, setShowInsuranceInfo] = useState<boolean>(false);
+  
   const showRoleplayGuide = currentAgent === "bookingAgent";
+  const showBurnoutAssessment = currentAgent === "checkInAgent";
+  const showInsuranceUpload = currentAgent === "informationCollector";
+  
+  const handleInsuranceUploadComplete = (coverageInfo: InsuranceCoverage) => {
+    setInsuranceCoverage(coverageInfo);
+    setShowInsuranceInfo(true);
+  };
   
   const infoSections = [
     {
@@ -65,7 +79,9 @@ function PatientInfoDisplay({ patientInfo, currentAgent }: PatientInfoDisplayPro
     <div className="flex flex-col bg-white min-h-0 rounded-xl">
       <div className="px-6 py-3 sticky top-0 z-10 text-base border-b bg-white rounded-t-xl">
         <span className="font-semibold">
-          {showRoleplayGuide ? "Facility Staff Guide" : "Patient Information"}
+          {showRoleplayGuide ? "Facility Staff Guide" : 
+           showBurnoutAssessment ? "Caregiver Check-In" : 
+           "Patient Information"}
         </span>
       </div>
       
@@ -74,23 +90,38 @@ function PatientInfoDisplay({ patientInfo, currentAgent }: PatientInfoDisplayPro
           <RoleplayGuide patientInfo={patientInfo} isVisible={true} />
         )}
         
-        {infoSections.map((section, sectionIndex) => (
-          <div key={sectionIndex} className="border-b border-gray-200 pb-4 last:border-b-0">
-            <h3 className="font-medium text-gray-900 mb-3">{section.title}</h3>
-            <div className="space-y-2">
-              {section.fields.map((field, fieldIndex) => (
-                <div key={fieldIndex} className="flex flex-col">
-                  <span className="text-sm font-medium text-gray-600">{field.label}</span>
-                  <span className="text-sm text-gray-900 bg-gray-50 p-2 rounded border min-h-[2rem]">
-                    {field.value || "Not provided"}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
+        {showBurnoutAssessment && (
+          <BurnoutAssessmentDisplay caregiverAssessment={caregiverAssessment} isVisible={true} />
+        )}
         
-        {Object.values(patientInfo).every(value => !value) && !showRoleplayGuide && (
+        {showInsuranceUpload && (
+          <>
+            <InsuranceDocumentUpload onUploadComplete={handleInsuranceUploadComplete} isVisible={true} />
+            {showInsuranceInfo && (
+              <InsuranceCoverageDisplay insuranceCoverage={insuranceCoverage} isVisible={true} />
+            )}
+          </>
+        )}
+        
+        {(!showBurnoutAssessment || Object.values(patientInfo).some(value => !!value)) && 
+          infoSections.map((section, sectionIndex) => (
+            <div key={sectionIndex} className="border-b border-gray-200 pb-4 last:border-b-0">
+              <h3 className="font-medium text-gray-900 mb-3">{section.title}</h3>
+              <div className="space-y-2">
+                {section.fields.map((field, fieldIndex) => (
+                  <div key={fieldIndex} className="flex flex-col">
+                    <span className="text-sm font-medium text-gray-600">{field.label}</span>
+                    <span className="text-sm text-gray-900 bg-gray-50 p-2 rounded border min-h-[2rem]">
+                      {field.value || "Not provided"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))
+        }
+        
+        {Object.values(patientInfo).every(value => !value) && !showRoleplayGuide && !showBurnoutAssessment && (
           <div className="text-center text-gray-500 italic py-8">
             Patient information will appear here as it's collected during the conversation.
           </div>

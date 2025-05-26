@@ -35,7 +35,7 @@ function App() {
   // Use urlCodec directly from URL search params (default: "opus")
   const urlCodec = searchParams.get("codec") || "opus";
 
-  const { transcriptItems, addTranscriptMessage, addTranscriptBreadcrumb } =
+  const { transcriptItems, addTranscriptMessage, addTranscriptBreadcrumb, clearTranscriptHistory } =
     useTranscript();
   const { logClientEvent, logServerEvent } = useEvent();
 
@@ -65,6 +65,9 @@ function App() {
   // Patient information state
   const [patientInfo, setPatientInfo] = useState<PatientInfo>({});
   const [isExtractingInfo, setIsExtractingInfo] = useState<boolean>(false);
+  
+  // Caregiver burnout assessment state
+  const [caregiverAssessment, setCaregiverAssessment] = useState<any>({});
 
   // Initialize the recording hook.
   const { startRecording, stopRecording, downloadRecording } =
@@ -438,7 +441,19 @@ function App() {
     e: React.ChangeEvent<HTMLSelectElement>
   ) => {
     const newAgentName = e.target.value;
+    const previousAgentName = selectedAgentName;
     setSelectedAgentName(newAgentName);
+    
+    // If switching to check-in agent, send a welcome message
+    if (newAgentName === "checkInAgent" && previousAgentName !== "checkInAgent") {
+      // Clear transcript history for a fresh start with the check-in agent
+      clearTranscriptHistory();
+      
+      // Add a brief delay to ensure UI updates before sending the welcome message
+      setTimeout(() => {
+        sendSimulatedUserMessage("Hello, I'm here for my daily check-in. I'm feeling really stressed today.");
+      }, 500);
+    }
   };
 
   // Instead of using setCodec, we update the URL and refresh the page when codec changes
@@ -504,6 +519,26 @@ function App() {
       stopRecording();
     };
   }, [sessionStatus]);
+  
+  // Listen for burnout assessment updates
+  useEffect(() => {
+    const handleBurnoutAssessment = (event: any) => {
+      const { assessment } = event.detail;
+      if (assessment) {
+        console.log("App: Updating caregiver assessment:", assessment);
+        setCaregiverAssessment((prev: any) => ({
+          ...prev,
+          ...assessment
+        }));
+      }
+    };
+    
+    window.addEventListener('burnoutAssessmentUpdate', handleBurnoutAssessment);
+    
+    return () => {
+      window.removeEventListener('burnoutAssessmentUpdate', handleBurnoutAssessment);
+    };
+  }, []);
 
   const agentSetKey = searchParams.get("agentConfig") || "default";
 
@@ -542,6 +577,7 @@ function App() {
                   <option key={agent.name} value={agent.name}>
                     {agent.name === "informationCollector" && "Information Collection"}
                     {agent.name === "bookingAgent" && "Facility Booking"}
+                    {agent.name === "checkInAgent" && "Caregiver Check-In"}
                   </option>
                 ))}
               </select>
@@ -574,7 +610,11 @@ function App() {
               }
             />
           }
-          rightPanel={<PatientInfoDisplay patientInfo={patientInfo} currentAgent={selectedAgentName} />}
+          rightPanel={<PatientInfoDisplay 
+            patientInfo={patientInfo} 
+            currentAgent={selectedAgentName} 
+            caregiverAssessment={caregiverAssessment}
+          />}
           defaultLeftWidth={65}
           minLeftWidth={40}
           maxLeftWidth={80}

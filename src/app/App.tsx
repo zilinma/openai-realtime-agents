@@ -8,7 +8,8 @@ import Image from "next/image";
 
 // UI components
 import Transcript from "./components/Transcript";
-import Events from "./components/Events";
+import PatientInfoDisplay from "./components/PatientInfoDisplay";
+import ResizableLayout from "./components/ResizableLayout";
 import BottomToolbar from "./components/BottomToolbar";
 
 // Types
@@ -21,6 +22,7 @@ import { useHandleServerEvent } from "./hooks/useHandleServerEvent";
 
 // Utilities
 import { createRealtimeConnection } from "./lib/realtimeConnection";
+import { extractPatientInformation, PatientInfo } from "./lib/extractPatientInfo";
 
 // Agent configs
 import { allAgentSets, defaultAgentSetKey } from "@/app/agentConfigs";
@@ -60,9 +62,36 @@ function App() {
   const [isOutputAudioBufferActive, setIsOutputAudioBufferActive] =
     useState<boolean>(false);
 
+  // Patient information state
+  const [patientInfo, setPatientInfo] = useState<PatientInfo>({});
+  const [isExtractingInfo, setIsExtractingInfo] = useState<boolean>(false);
+
   // Initialize the recording hook.
   const { startRecording, stopRecording, downloadRecording } =
     useAudioDownload();
+
+  // Function to extract patient information from conversation
+  const extractAndUpdatePatientInfo = async () => {
+    if (isExtractingInfo) return; // Prevent multiple simultaneous extractions
+    
+    setIsExtractingInfo(true);
+    try {
+      // Get conversation text from transcript items
+      const conversationText = transcriptItems
+        .filter(item => item.type === "MESSAGE")
+        .map(item => `${item.role}: ${item.title}`)
+        .join("\n");
+
+      if (conversationText.trim()) {
+        const extractedInfo = await extractPatientInformation(conversationText);
+        setPatientInfo(extractedInfo);
+      }
+    } catch (error) {
+      console.error("Error extracting patient information:", error);
+    } finally {
+      setIsExtractingInfo(false);
+    }
+  };
 
   const sendClientEvent = (eventObj: any, eventNameSuffix = "") => {
     if (dcRef.current && dcRef.current.readyState === "open") {
@@ -88,6 +117,20 @@ function App() {
     setSelectedAgentName,
     setIsOutputAudioBufferActive,
   });
+
+  // Extract patient information when assistant finishes speaking
+  useEffect(() => {
+    const lastAssistantMessage = transcriptItems
+      .filter(item => item.type === "MESSAGE" && item.role === "assistant")
+      .pop();
+    
+    if (lastAssistantMessage && lastAssistantMessage.status === "DONE") {
+      // Delay extraction slightly to ensure message is fully processed
+      setTimeout(() => {
+        extractAndUpdatePatientInfo();
+      }, 1000);
+    }
+  }, [transcriptItems]);
 
   useEffect(() => {
     let finalAgentConfig = searchParams.get("agentConfig");
@@ -436,117 +479,96 @@ function App() {
 
   return (
     <div className="text-base flex flex-col h-screen bg-gray-100 text-gray-800 relative">
-      <div className="p-5 text-lg font-semibold flex justify-between items-center">
+      {/* Header - Fixed height */}
+      <div className="flex-shrink-0 p-5 text-lg font-semibold flex justify-between items-center">
         <div
           className="flex items-center cursor-pointer"
           onClick={() => window.location.reload()}
         >
           <div>
             <Image
-              src="/openai-logomark.svg"
-              alt="OpenAI Logo"
-              width={20}
-              height={20}
+              src="/corgi-logo.svg"
+              alt="CorgiVoice Logo"
+              width={24}
+              height={24}
               className="mr-2"
             />
           </div>
           <div>
-            Realtime API <span className="text-gray-500">Agents</span>
+            <span className="font-bold text-orange-600">CorgiVoice</span> <span className="text-gray-500">Assisted Living Placement</span>
           </div>
         </div>
+        
         <div className="flex items-center">
-          <label className="flex items-center text-base gap-1 mr-2 font-medium">
-            Scenario
-          </label>
-          <div className="relative inline-block">
-            <select
-              value={agentSetKey}
-              onChange={handleAgentChange}
-              className="appearance-none border border-gray-300 rounded-lg text-base px-2 py-1 pr-8 cursor-pointer font-normal focus:outline-none"
-            >
-              {Object.keys(allAgentSets).map((agentKey) => (
-                <option key={agentKey} value={agentKey}>
-                  {agentKey}
-                </option>
-              ))}
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-gray-600">
-              <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                <path
-                  fillRule="evenodd"
-                  d="M5.23 7.21a.75.75 0 011.06.02L10 10.44l3.71-3.21a.75.75 0 111.04 1.08l-4.25 3.65a.75.75 0 01-1.04 0L5.21 8.27a.75.75 0 01.02-1.06z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-          </div>
-
-          {agentSetKey && (
-            <div className="flex items-center ml-6">
-              <label className="flex items-center text-base gap-1 mr-2 font-medium">
-                Agent
-              </label>
-              <div className="relative inline-block">
-                <select
-                  value={selectedAgentName}
-                  onChange={handleSelectedAgentChange}
-                  className="appearance-none border border-gray-300 rounded-lg text-base px-2 py-1 pr-8 cursor-pointer font-normal focus:outline-none"
-                >
-                  {selectedAgentConfigSet?.map((agent) => (
-                    <option key={agent.name} value={agent.name}>
-                      {agent.name}
-                    </option>
-                  ))}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-gray-600">
-                  <svg
-                    className="h-4 w-4"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M5.23 7.21a.75.75 0 011.06.02L10 10.44l3.71-3.21a.75.75 0 111.04 1.08l-4.25 3.65a.75.75 0 01-1.04 0L5.21 8.27a.75.75 0 01.02-1.06z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
+          <div className="bg-gray-100 px-4 py-2 rounded-lg border flex items-center gap-3">
+            <span className="text-sm text-gray-600">Current Mode:</span>
+            <div className="relative inline-block">
+              <select
+                value={selectedAgentName}
+                onChange={handleSelectedAgentChange}
+                className="appearance-none bg-white border border-gray-300 rounded text-sm px-3 py-1 pr-8 cursor-pointer font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {selectedAgentConfigSet?.map((agent) => (
+                  <option key={agent.name} value={agent.name}>
+                    {agent.name === "informationCollector" && "Information Collection"}
+                    {agent.name === "bookingAgent" && "Facility Booking"}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-gray-600">
+                <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                  <path
+                    fillRule="evenodd"
+                    d="M5.23 7.21a.75.75 0 011.06.02L10 10.44l3.71-3.21a.75.75 0 111.04 1.08l-4.25 3.65a.75.75 0 01-1.04 0L5.21 8.27a.75.75 0 01.02-1.06z"
+                    clipRule="evenodd"
+                  />
+                </svg>
               </div>
             </div>
-          )}
+          </div>
         </div>
       </div>
 
-      <div className="flex flex-1 gap-2 px-2 overflow-hidden relative">
-        <Transcript
-          userText={userText}
-          setUserText={setUserText}
-          onSendMessage={handleSendTextMessage}
-          downloadRecording={downloadRecording}
-          canSend={
-            sessionStatus === "CONNECTED" &&
-            dcRef.current?.readyState === "open"
+      {/* Main content area - Takes remaining height */}
+      <div className="flex-1 px-2 pb-2 min-h-0">
+        <ResizableLayout
+          leftPanel={
+            <Transcript
+              userText={userText}
+              setUserText={setUserText}
+              onSendMessage={handleSendTextMessage}
+              downloadRecording={downloadRecording}
+              canSend={
+                sessionStatus === "CONNECTED" &&
+                dcRef.current?.readyState === "open"
+              }
+            />
           }
+          rightPanel={<PatientInfoDisplay patientInfo={patientInfo} currentAgent={selectedAgentName} />}
+          defaultLeftWidth={65}
+          minLeftWidth={40}
+          maxLeftWidth={80}
         />
-
-        <Events isExpanded={isEventsPaneExpanded} />
       </div>
 
-      <BottomToolbar
-        sessionStatus={sessionStatus}
-        onToggleConnection={onToggleConnection}
-        isPTTActive={isPTTActive}
-        setIsPTTActive={setIsPTTActive}
-        isPTTUserSpeaking={isPTTUserSpeaking}
-        handleTalkButtonDown={handleTalkButtonDown}
-        handleTalkButtonUp={handleTalkButtonUp}
-        isEventsPaneExpanded={isEventsPaneExpanded}
-        setIsEventsPaneExpanded={setIsEventsPaneExpanded}
-        isAudioPlaybackEnabled={isAudioPlaybackEnabled}
-        setIsAudioPlaybackEnabled={setIsAudioPlaybackEnabled}
-        codec={urlCodec}
-        onCodecChange={handleCodecChange}
-      />
+      {/* Bottom toolbar - Fixed height */}
+      <div className="flex-shrink-0">
+        <BottomToolbar
+          sessionStatus={sessionStatus}
+          onToggleConnection={onToggleConnection}
+          isPTTActive={isPTTActive}
+          setIsPTTActive={setIsPTTActive}
+          isPTTUserSpeaking={isPTTUserSpeaking}
+          handleTalkButtonDown={handleTalkButtonDown}
+          handleTalkButtonUp={handleTalkButtonUp}
+          isEventsPaneExpanded={isEventsPaneExpanded}
+          setIsEventsPaneExpanded={setIsEventsPaneExpanded}
+          isAudioPlaybackEnabled={isAudioPlaybackEnabled}
+          setIsAudioPlaybackEnabled={setIsAudioPlaybackEnabled}
+          codec={urlCodec}
+          onCodecChange={handleCodecChange}
+        />
+      </div>
     </div>
   );
 }

@@ -3,8 +3,8 @@ import "./globals.css";
 import "./lib/envSetup";
 
 export const metadata: Metadata = {
-  title: "Realtime API Agents",
-  description: "A demo app from OpenAI.",
+  title: "CorgiVoice - Assisted Living Placement",
+  description: "AI-powered assisted living placement service with voice interaction.",
 };
 
 export default function RootLayout({

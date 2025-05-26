@@ -9,7 +9,7 @@ import {
 } from "@/app/types";
 import { useTranscript } from "@/app/contexts/TranscriptContext";
 import { useEvent } from "@/app/contexts/EventContext";
-import { runGuardrailClassifier } from "@/app/lib/callOai";
+// import { runGuardrailClassifier } from "@/app/lib/callOai";
 
 export interface UseHandleServerEventParams {
   setSessionStatus: (status: SessionStatus) => void;
@@ -35,12 +35,16 @@ export function useHandleServerEvent({
     addTranscriptMessage,
     updateTranscriptMessage,
     updateTranscriptItem,
+    clearTranscriptHistory,
   } = useTranscript();
 
   const { logServerEvent } = useEvent();
 
   const assistantDeltasRef = useRef<{ [itemId: string]: string }>({});
+  const conversationItemIdsRef = useRef<string[]>([]);
 
+  // Commenting out processGuardrail function
+  /*
   async function processGuardrail(itemId: string, text: string) {
     let res;
     try {
@@ -66,6 +70,7 @@ export function useHandleServerEvent({
     // Update the transcript item with the new guardrail result.
     updateTranscriptItem(itemId, { guardrailResult: newGuardrailResult });
   }
+  */
 
   const handleFunctionCall = async (functionCallParams: {
     name: string;
@@ -102,7 +107,55 @@ export function useHandleServerEvent({
         selectedAgentConfigSet?.find((a) => a.name === destinationAgent) ||
         null;
       if (newAgentConfig) {
+        // Clear the conversation history for the new agent
+        clearTranscriptHistory();
+        
+        // Delete all conversation items from OpenAI to clear conversation history
+        conversationItemIdsRef.current.forEach((itemId) => {
+          sendClientEvent(
+            {
+              type: "conversation.item.delete",
+              item_id: itemId,
+            },
+            `delete conversation item ${itemId} for agent transfer`
+          );
+        });
+        
+        // Clear the tracked conversation items
+        conversationItemIdsRef.current = [];
+        
         setSelectedAgentName(destinationAgent);
+        
+        // Add a breadcrumb to indicate the agent transfer
+        addTranscriptBreadcrumb(
+          `Agent Transfer: ${selectedAgentName} → ${destinationAgent}`,
+          { 
+            from: selectedAgentName, 
+            to: destinationAgent,
+            rationale: args.rationale_for_transfer,
+            context: args.conversation_context
+          }
+        );
+
+        // For booking agent, simulate the facility staff introduction
+        if (destinationAgent === "bookingAgent") {
+          setTimeout(() => {
+            const facilityIntroId = `facility-intro-${Date.now()}`;
+            addTranscriptMessage(facilityIntroId, "user", "Hello, this is Sunset Manor Assisted Living. This is Sarah from our admissions department. How can I help you today?", false);
+            
+            sendClientEvent({
+              type: "conversation.item.create",
+              item: {
+                id: facilityIntroId,
+                type: "message",
+                role: "user",
+                content: [{ type: "input_text", text: "Hello, this is Sunset Manor Assisted Living. This is Sarah from our admissions department. How can I help you today?" }],
+              },
+            }, "(simulated facility staff introduction for CorgiVoice)");
+            
+            sendClientEvent({ type: "response.create" }, "(trigger response to facility introduction)");
+          }, 1000);
+        }
       }
       const functionCallOutput = {
         destination_agent: destinationAgent,
@@ -172,6 +225,11 @@ export function useHandleServerEvent({
         const role = serverEvent.item?.role as "user" | "assistant";
         const itemId = serverEvent.item?.id;
 
+        // Track conversation item IDs for potential deletion during agent transfer
+        if (itemId) {
+          conversationItemIdsRef.current.push(itemId);
+        }
+
         if (itemId && transcriptItems.some((item) => item.itemId === itemId)) {
           // don't add transcript message if already exists
           break;
@@ -205,11 +263,14 @@ export function useHandleServerEvent({
           // Update the transcript message with the new text.
           updateTranscriptMessage(itemId, deltaText, true);
 
-          // Accumulate the deltas and run the output guardrail at regular intervals.
+          // Accumulate the deltas but don't run guardrail checks
           if (!assistantDeltasRef.current[itemId]) {
             assistantDeltasRef.current[itemId] = "";
           }
           assistantDeltasRef.current[itemId] += deltaText;
+          
+          // Commenting out guardrail calls
+          /*
           const newAccumulated = assistantDeltasRef.current[itemId];
           const wordCount = newAccumulated.trim().split(" ").length;
 
@@ -217,6 +278,7 @@ export function useHandleServerEvent({
           if (wordCount > 0 && wordCount % 5 === 0) {
             processGuardrail(itemId, newAccumulated);
           }
+          */
         }
         break;
       }
@@ -235,6 +297,7 @@ export function useHandleServerEvent({
                 arguments: outputItem.arguments,
               });
             }
+            /* Commenting out final guardrail check
             if (
               outputItem.type === "message" &&
               outputItem.role === "assistant"
@@ -244,6 +307,7 @@ export function useHandleServerEvent({
               // Final guardrail for this message
               processGuardrail(itemId, text);
             }
+            */
           });
         }
         break;

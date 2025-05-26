@@ -1,0 +1,28 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Corgi head -->
+  <ellipse cx="16" cy="18" rx="8" ry="7" fill="#D2691E"/>
+  
+  <!-- Ears -->
+  <ellipse cx="11" cy="12" rx="2" ry="4" fill="#D2691E" transform="rotate(-25 11 12)"/>
+  <ellipse cx="21" cy="12" rx="2" ry="4" fill="#D2691E" transform="rotate(25 21 12)"/>
+  
+  <!-- Inner ears -->
+  <ellipse cx="11" cy="12" rx="1" ry="2.5" fill="#FFB6C1" transform="rotate(-25 11 12)"/>
+  <ellipse cx="21" cy="12" rx="1" ry="2.5" fill="#FFB6C1" transform="rotate(25 21 12)"/>
+  
+  <!-- Eyes -->
+  <circle cx="13" cy="17" r="1.5" fill="#000"/>
+  <circle cx="19" cy="17" r="1.5" fill="#000"/>
+  <circle cx="13.5" cy="16.5" r="0.5" fill="#FFF"/>
+  <circle cx="19.5" cy="16.5" r="0.5" fill="#FFF"/>
+  
+  <!-- Nose -->
+  <ellipse cx="16" cy="20" rx="1" ry="0.7" fill="#000"/>
+  
+  <!-- Mouth -->
+  <path d="M16 21 Q14 22.5 12 21.5" stroke="#000" stroke-width="0.8" fill="none"/>
+  <path d="M16 21 Q18 22.5 20 21.5" stroke="#000" stroke-width="0.8" fill="none"/>
+  
+  <!-- White chest marking -->
+  <ellipse cx="16" cy="23" rx="3" ry="2" fill="#FFF"/>
+</svg> 

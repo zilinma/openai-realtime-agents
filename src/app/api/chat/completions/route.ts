@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
-const openai = new OpenAI();
+// Use VOICE_OPENAI_API_KEY if defined, fall back to OPENAI_API_KEY otherwise
+const apiKey = process.env.VOICE_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
+const openai = new OpenAI({
+  apiKey: apiKey,
+});
 
 export async function POST(req: Request) {
   try {

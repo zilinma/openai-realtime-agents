@@ -6,7 +6,7 @@ import { TranscriptItem } from "@/app/types";
 import Image from "next/image";
 import { useTranscript } from "@/app/contexts/TranscriptContext";
 import { DownloadIcon, ClipboardCopyIcon } from "@radix-ui/react-icons";
-import { GuardrailChip } from "./GuardrailChip";
+// import { GuardrailChip } from "./GuardrailChip";
 
 export interface TranscriptProps {
   userText: string;
@@ -98,6 +98,15 @@ function Transcript({
           ref={transcriptRef}
           className="overflow-auto p-4 flex flex-col gap-y-4 h-full"
         >
+          {/* Debug info */}
+          {transcriptItems.length === 0 && (
+            <div className="text-center text-gray-500 italic py-8">
+              No messages yet. Connect and start a conversation to see the transcript here.
+              <br />
+              <small>Debug: {transcriptItems.length} items in transcript</small>
+            </div>
+          )}
+          
           {transcriptItems.map((item) => {
             const {
               itemId,
@@ -151,11 +160,13 @@ function Transcript({
                         <ReactMarkdown>{displayTitle}</ReactMarkdown>
                       </div>
                     </div>
+                    {/* Commenting out guardrail result display
                     {guardrailResult && (
                       <div className="bg-gray-200 px-3 py-2 rounded-b-xl">
                         <GuardrailChip guardrailResult={guardrailResult} />
                       </div>
                     )}
+                    */}
                   </div>
                 </div>
               );

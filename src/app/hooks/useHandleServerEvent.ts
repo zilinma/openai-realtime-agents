@@ -107,9 +107,6 @@ export function useHandleServerEvent({
         selectedAgentConfigSet?.find((a) => a.name === destinationAgent) ||
         null;
       if (newAgentConfig) {
-        // Clear the conversation history for the new agent
-        clearTranscriptHistory();
-        
         // Delete all conversation items from OpenAI to clear conversation history
         conversationItemIdsRef.current.forEach((itemId) => {
           sendClientEvent(
@@ -123,6 +120,9 @@ export function useHandleServerEvent({
         
         // Clear the tracked conversation items
         conversationItemIdsRef.current = [];
+        
+        // Clear the conversation history for the new agent (but preserve patient info in UI)
+        clearTranscriptHistory();
         
         setSelectedAgentName(destinationAgent);
         

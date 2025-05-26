@@ -86,6 +86,7 @@ function App() {
         const extractedInfo = await extractPatientInformation(conversationText);
         setPatientInfo(extractedInfo);
       }
+      // Don't clear patient info if conversation text is empty - preserve existing info
     } catch (error) {
       console.error("Error extracting patient information:", error);
     } finally {
@@ -118,8 +119,13 @@ function App() {
     setIsOutputAudioBufferActive,
   });
 
-  // Extract patient information when assistant finishes speaking
+  // Extract patient information when assistant finishes speaking (only for information collector agent)
   useEffect(() => {
+    // Only extract patient info when using the information collector agent
+    if (selectedAgentName !== "informationCollector") {
+      return;
+    }
+
     const lastAssistantMessage = transcriptItems
       .filter(item => item.type === "MESSAGE" && item.role === "assistant")
       .pop();
@@ -130,7 +136,7 @@ function App() {
         extractAndUpdatePatientInfo();
       }, 1000);
     }
-  }, [transcriptItems]);
+  }, [transcriptItems, selectedAgentName]);
 
   useEffect(() => {
     let finalAgentConfig = searchParams.get("agentConfig");
@@ -297,7 +303,31 @@ function App() {
           create_response: true,
         };
 
-    const instructions = currentAgent?.instructions || "";
+    let instructions = currentAgent?.instructions || "";
+    
+    // For booking agent, inject current patient information into instructions
+    if (selectedAgentName === "bookingAgent" && patientInfo && Object.keys(patientInfo).length > 0) {
+      const patientInfoText = [
+        patientInfo.name && `- Name: ${patientInfo.name}`,
+        patientInfo.age && `- Age: ${patientInfo.age}`,
+        patientInfo.medicalConditions && `- Medical Conditions: ${patientInfo.medicalConditions}`,
+        patientInfo.mobility && `- Mobility: ${patientInfo.mobility}`,
+        patientInfo.careLevel && `- Care Level: ${patientInfo.careLevel}`,
+        patientInfo.caregiverRelationship && `- Caregiver: ${patientInfo.caregiverRelationship}`,
+        patientInfo.location && `- Location Preference: ${patientInfo.location}`,
+        patientInfo.specialRequirements && `- Special Requirements: ${patientInfo.specialRequirements}`,
+        patientInfo.budget && `- Budget: ${patientInfo.budget}`,
+        patientInfo.timeline && `- Timeline: ${patientInfo.timeline}`,
+      ].filter(Boolean).join('\n');
+      
+      if (patientInfoText) {
+        instructions = instructions.replace(
+          /# Your Client Information \(from previous conversation\)[\s\S]*?- Timeline: Needs placement within 5-6 days \(URGENT\)/,
+          `# Your Client Information (from previous conversation)\nYou have detailed information about your client:\n${patientInfoText}`
+        );
+      }
+    }
+    
     const tools = currentAgent?.tools || [];
 
     const sessionUpdateEvent = {

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
 import MockOpenAI from "@/app/lib/mockOpenAI";
 
 // Insurance analysis prompt
@@ -34,59 +33,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get document text content (in a real implementation, we would extract text from PDF/DOCX)
-    // For this demo, we'll use the file name and some mock content
-    const documentText = `Insurance Policy Document: ${file.name}
+    // Get document text content (this would be used in a real implementation)
+    // For this demo, we use mock data
+    // We'll keep this commented but remove it from the variables to avoid the error
+    // const documentText = `Insurance Policy Document: ${file.name}
+    // ... rest of the mock document text ...`;
     
-POLICY SUMMARY:
-This policy provides coverage for medical and healthcare services required for assisted living and home care.
-
-HOME CARE SERVICES:
-- Covered at 80% after deductible
-- Limited to 60 visits per year
-- Must be medically necessary and prescribed by a physician
-- Includes skilled nursing, home health aides, and medical social services
-
-REHABILITATION SERVICES:
-- Physical therapy: Covered at 80% after deductible, limited to 30 sessions per year
-- Occupational therapy: Covered at 80% after deductible, limited to 30 sessions per year
-- Speech therapy: Covered at 80% after deductible, limited to 30 sessions per year
-- Cognitive rehabilitation: Not covered
-
-INPATIENT CARE:
-- Skilled nursing facility: Covered at 80% after deductible for up to 100 days per benefit period
-- Assisted living facility: Not covered under medical benefits
-- Nursing home care: Limited coverage for skilled nursing only, not custodial care
-
-DURABLE MEDICAL EQUIPMENT:
-- Covered at 80% after deductible
-- Requires prior authorization for items over $500
-- Includes wheelchairs, hospital beds, oxygen equipment
-
-FINANCIAL INFORMATION:
-- Annual deductible: $1,500 individual / $3,000 family
-- Co-insurance: 20% for most covered services
-- Out-of-pocket maximum: $5,000 individual / $10,000 family per year
-- Prior authorization required for certain services
-
-EXCLUSIONS:
-- Custodial care not covered
-- Experimental treatments not covered
-- Cosmetic services not covered
-- Services not deemed medically necessary
-`;
-
     // Initialize OpenAI client (using mock for demo purposes)
-    // In production, use real OpenAI client:
-    // const openai = new OpenAI({
-    //   apiKey: process.env.OPENAI_API_KEY,
-    // });
-    
-    // Using mock for demo purposes
     const openai = new MockOpenAI();
 
-    // Call OpenAI API
-    const response = await openai.chat.completions.create();
+    // Call OpenAI API - using the prompt in a real implementation
+    const response = await openai.chat.completions.create({
+      messages: [
+        { role: "system", content: INSURANCE_ANALYSIS_PROMPT },
+        { role: "user", content: `Analyze the insurance document: ${file.name}` }
+      ]
+    });
 
     // Extract and parse the response
     const content = response.choices[0]?.message?.content || "{}";

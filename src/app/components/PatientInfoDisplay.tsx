@@ -123,7 +123,7 @@ function PatientInfoDisplay({ patientInfo, currentAgent, caregiverAssessment = {
         
         {Object.values(patientInfo).every(value => !value) && !showRoleplayGuide && !showBurnoutAssessment && (
           <div className="text-center text-gray-500 italic py-8">
-            Patient information will appear here as it's collected during the conversation.
+            Patient information will appear here as it&apos;s collected during the conversation.
           </div>
         )}
       </div>

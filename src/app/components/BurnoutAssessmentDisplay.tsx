@@ -84,9 +84,19 @@ function BurnoutAssessmentDisplay({ caregiverAssessment, isVisible }: BurnoutAss
         </div>
       ))}
 
-      {Object.values(caregiverAssessment).every(value => !value) && (
-        <div className="text-center text-gray-500 italic py-8">
-          Caregiver assessment information will appear here as it's collected during check-in conversations.
+      <div className="bg-white rounded p-3 border border-blue-200">
+        <h4 className="font-semibold mb-2">👨‍⚕️ Action Items</h4>
+        <div className="text-xs space-y-1">
+          <div><strong>Resources Recommended:</strong> {caregiverAssessment.recommendedResources || "None recommended yet"}</div>
+          <div><strong>Should Schedule Follow-up?</strong> {caregiverAssessment.urgentConcerns ? "Yes, ASAP" : "Regular check-in schedule"}</div>
+          <div><strong>Patient Status Updates:</strong> {caregiverAssessment.patientUpdates || "No updates provided"}</div>
+        </div>
+      </div>
+
+      {!Object.values(caregiverAssessment).some(val => !!val) && (
+        <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-100 text-sm my-4">
+          <p className="font-medium mb-2">👋 Welcome to your caregiver check-in</p>
+          <p className="text-gray-600">Our AI assistant will check on your wellbeing and help identify if you&apos;re experiencing caregiver burnout. Feel free to discuss how you&apos;re feeling caring for your loved one.</p>
         </div>
       )}
     </div>

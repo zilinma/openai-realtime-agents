@@ -1,24 +1,19 @@
 "use client";
 
 import { useRef } from "react";
-import {
-  ServerEvent,
-  SessionStatus,
-  AgentConfig,
-  GuardrailResultType,
-} from "@/app/types";
+import { AgentConfig, ServerEvent, SessionStatus } from "@/app/types";
 import { useTranscript } from "@/app/contexts/TranscriptContext";
 import { useEvent } from "@/app/contexts/EventContext";
 // import { runGuardrailClassifier } from "@/app/lib/callOai";
 
-export interface UseHandleServerEventParams {
-  setSessionStatus: (status: SessionStatus) => void;
+// Define props for the hook
+interface UseHandleServerEventProps {
+  setSessionStatus: React.Dispatch<React.SetStateAction<SessionStatus>>;
   selectedAgentName: string;
   selectedAgentConfigSet: AgentConfig[] | null;
   sendClientEvent: (eventObj: any, eventNameSuffix?: string) => void;
-  setSelectedAgentName: (name: string) => void;
-  shouldForceResponse?: boolean;
-  setIsOutputAudioBufferActive: (active: boolean) => void;
+  setSelectedAgentName: React.Dispatch<React.SetStateAction<string>>;
+  setIsOutputAudioBufferActive: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export function useHandleServerEvent({
@@ -28,7 +23,7 @@ export function useHandleServerEvent({
   sendClientEvent,
   setSelectedAgentName,
   setIsOutputAudioBufferActive,
-}: UseHandleServerEventParams) {
+}: UseHandleServerEventProps) {
   const {
     transcriptItems,
     addTranscriptBreadcrumb,

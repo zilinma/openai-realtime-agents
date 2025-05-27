@@ -103,24 +103,32 @@ function RoleplayGuide({ patientInfo, isVisible }: RoleplayGuideProps) {
         <div className="bg-white rounded p-3 border border-blue-200">
           <h4 className="font-semibold mb-2">💬 How to Respond as Facility Staff:</h4>
           <div className="text-xs space-y-2">
-            <div className="bg-green-50 border border-green-200 rounded p-2">
-              <strong>Your Opening (already provided):</strong><br/>
-              "Hello, this is {facilityInfo.name}. This is Sarah from our admissions department. How can I help you today?"
-            </div>
-            <div className="bg-blue-50 border border-blue-200 rounded p-2">
-              <strong>After the coordinator introduces themselves:</strong><br/>
-              "Thank you for calling! I'd be happy to discuss our availability and services. What type of care are you looking for?"
-            </div>
-            <div><strong>About availability:</strong> "Let me check our current openings for memory care..." or "We do have some availability in our memory care unit..."</div>
-            <div><strong>About costs:</strong> "Our memory care rates start at $4,200 per month for a shared room, and private rooms are $5,800..."</div>
-            <div><strong>About services:</strong> "We specialize in Alzheimer's care with 24/7 nursing staff and can handle immobile residents..."</div>
-            <div><strong>Ask questions:</strong> "What level of mobility assistance does your client need?" or "Are there any specific medical requirements?"</div>
-            <div><strong>Next steps:</strong> "Would you like to schedule a tour for the family?" or "I can send you our care assessment form"</div>
+            <p>When communicating with the placement agent:</p>
+            <ul className="ml-4 list-disc">
+              <li>Describe your facility&apos;s care options for this patient - mention amenities and programs that match their needs</li>
+              <li>Ask clarifying questions about the patient&apos;s condition, mobility, and daily assistance needs</li>
+              <li>Explain availability timeframes - be specific about potential wait times</li>
+              <li>Discuss financial aspects respectfully - mention what insurance you accept and pricing tiers</li>
+              <li>Be professional but personable, as you would in a real facility interaction</li>
+            </ul>
           </div>
         </div>
 
+        <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-100 text-sm my-4">
+          <p className="font-medium mb-2">🎭 Roleplaying Guidelines</p>
+          <p className="text-gray-600 mb-2">The AI agent is acting as a placement coordinator trying to find appropriate care for the patient described above. You can respond as if you&apos;re a facility representative answering their inquiry.</p>
+          <p className="text-gray-600">Sample responses:</p>
+          <ul className="text-gray-600 mt-1 ml-4 list-disc text-xs">
+            <li>&ldquo;At Sunshine Acres, we do have availability in our assisted living wing. Based on what you&apos;ve shared about Martha&apos;s mobility issues, our first-floor apartments would be ideal...&rdquo;</li>
+            <li>&ldquo;We accept most major insurance plans, including Medicare. Our base rate for assisted living is $4,500 monthly, with additional services available as needed...&rdquo;</li>
+            <li>&ldquo;Given John&apos;s dementia diagnosis, our memory care unit would be most appropriate. We have specialized staff trained in dementia care...&rdquo;</li>
+            <li>&ldquo;We currently have a 2-week waiting period for new residents. We&apos;d need to conduct an assessment first to determine the appropriate level of care...&rdquo;</li>
+            <li>&ldquo;For residents with diabetes, we have dietitians who create individualized meal plans and staff who can assist with insulin management...&rdquo;</li>
+          </ul>
+        </div>
+
         <div className="bg-yellow-50 border border-yellow-200 rounded p-2">
-          <p className="text-xs"><strong>💡 Tip:</strong> Be helpful but realistic about availability. Ask questions about the patient's specific needs to show you're assessing fit.</p>
+          <p className="text-xs"><strong>💡 Tip:</strong> Be helpful but realistic about availability. Ask questions about the patient&apos;s specific needs to show you&apos;re assessing fit.</p>
         </div>
       </div>
     </div>
